@@ -6,7 +6,7 @@
 /*   By: net-touz <net-touz@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/15 19:37:58 by net-touz          #+#    #+#             */
-/*   Updated: 2022/05/17 16:24:28 by net-touz         ###   ########.fr       */
+/*   Updated: 2022/05/18 14:54:46 by net-touz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,9 @@ typedef struct s_stack
 	int				position;
 	int				size;
 	struct s_stack	*next;
+	int				rev;
+	int				sub_index;
+	int				insts;
 }					t_stack;
 
 //parser & checker
@@ -45,6 +48,7 @@ void	ft_r(t_stack **a, t_stack **b, char b_a);
 void	ft_rr(t_stack **a, t_stack **b);
 void	ft_rv(t_stack **a, t_stack **b, char b_a);
 void	ft_rrv(t_stack **a, t_stack **b);
+void    ft_rrv(t_stack **a, t_stack **b);
 char	**sort(t_stack *stack);
 
 //sort

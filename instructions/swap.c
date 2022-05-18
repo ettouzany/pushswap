@@ -6,7 +6,7 @@
 /*   By: net-touz <net-touz@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/16 10:57:06 by net-touz          #+#    #+#             */
-/*   Updated: 2022/05/17 00:35:49 by net-touz         ###   ########.fr       */
+/*   Updated: 2022/05/18 12:56:22 by net-touz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -263,4 +263,11 @@ void    ft_rv(t_stack **a, t_stack **b, char b_a)
         (*b) = tmp;
         return ;
     }
+}
+
+void    ft_rrv(t_stack **a, t_stack **b)
+{
+    ft_rv(a, b, 'a');
+    ft_rv(a, b, 'b');
+    return ;
 }

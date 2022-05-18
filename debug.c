@@ -6,7 +6,7 @@
 /*   By: net-touz <net-touz@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/16 07:55:49 by net-touz          #+#    #+#             */
-/*   Updated: 2022/05/17 19:03:23 by net-touz         ###   ########.fr       */
+/*   Updated: 2022/05/18 15:55:32 by net-touz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,6 +45,23 @@ void print_instruction(char **instruction, int size)
 		ft_putchar('\n');
 		i++;
 	}
+}
+
+void print_ints(int *ints, int size, char *message)
+{
+	int i;
+
+	i = 0;
+	ft_putstr(message);
+	while (i < size)
+	{
+		ft_putstr("\033[31m");
+		ft_putnbr(ints[i]);
+		ft_putchar(' ');
+		i++;
+	}
+	ft_putchar('\n');
+	ft_putstr("\033[0m");
 }
 int *LIS_algo_array_int(int *numbers, int *size)
 {
@@ -124,6 +141,8 @@ void	flag_stack(t_stack *stack)
 		i++;
 	}
 	subsequence = LIS_algo_array_int(poses, &subsequence_size);
+	printf("subsequence : ");
+
 	j = 0;
 	while (j < subsequence_size)
 	{
@@ -132,6 +151,12 @@ void	flag_stack(t_stack *stack)
 			{tmp = tmp->next;}
 		tmp->flag = 1;
 		j++;
+	}
+	i = 0;
+	while (i < subsequence_size)
+	{
+		printf("%d ", subsequence[i]);
+		i++;
 	}
 	free(poses);
 	free(subsequence);
@@ -497,17 +522,77 @@ void	print_stack(t_stack *stack)
 	}
 }
 
+int	*needed2(t_stack **a, t_stack **b,
+	int **rev_rotate_or_rotate,
+	int **rev_rotate_or_rotate_b,
+	int **needed_instructions_on_b
+)
+{
+	int *needed_instructions;
+	int i;
+	i = 0;
+	int	rev = 0;
+	int	nex	= 0; 
+	needed_instructions = (int *)malloc(sizeof(int) * (*b)->size);
+	*rev_rotate_or_rotate = (int *)malloc(sizeof(int) * (*b)->size);
+	*needed_instructions_on_b = (int *)malloc(sizeof(int) * (*b)->size);
+	*rev_rotate_or_rotate_b = (int *)malloc(sizeof(int) * (*b)->size);
+	t_stack *tmp = *b;
+	while (tmp)
+	{
+		rev	= needed_rev(a, tmp->position);
+		nex = needed_ins(a, tmp->position);
+		if ((nex <= rev || rev == -1) && nex != -1)
+		{
+			needed_instructions[i] = nex;
+			(*rev_rotate_or_rotate)[i] = 0;
+			
+		}
+		else if (rev != -1)
+		{
+			needed_instructions[i] = rev;
+			(*rev_rotate_or_rotate)[i] = 1;
+			
+		}
+		else
+			needed_instructions[i] = -1;
+		if(i < (*b)->size/2)
+		{
+			(*rev_rotate_or_rotate_b)[i] = 0;
+			(*needed_instructions_on_b)[i] = i;
+		}
+		else
+		{
+			(*rev_rotate_or_rotate_b)[i] = 1;
+			(*needed_instructions_on_b)[i] = (*b)->size - i;
+		}
+		tmp = tmp->next;
+		i++;
+	}
+	return (needed_instructions);
+}
+
+
+
 
 void	send_b_a(t_stack **a, t_stack **b, char ***instructions, int *ins_size)
 {
 	int *rev_rotate_or_rotate;
 	int *rev_rotate_or_rotate_b;
 	int *needed_instructions_on_b;
-	int *needed_instructions_to_sort = needed(a, b, 
+	int *needed_instructions_to_sort = needed2(a, b, 
 	&rev_rotate_or_rotate,
+	&rev_rotate_or_rotate_b,
 	&needed_instructions_on_b);
 	int i;
 	i = 0;
+
+	// print_ints(needed_instructions_to_sort, (*b)->size, "needed_instructions_to_sort: ");
+	// print_ints(rev_rotate_or_rotate, (*b)->size, "rev_rotate_or_rotate: ");
+	// print_ints(rev_rotate_or_rotate_b, (*b)->size, "rev_rotate_or_rotate_b: ");
+	// print_ints(needed_instructions_on_b, (*b)->size, "needed_instructions_on_b: ");
+	
+
 
 
 	// get the smallest value
@@ -536,19 +621,50 @@ void	send_b_a(t_stack **a, t_stack **b, char ***instructions, int *ins_size)
 		}
 		i++;
 	}
+	// printf("smallest_index: %d\n", smallest_index);
+
 	i = 0;
+	
+	int	rrr = 0;
+	if(needed_instructions_to_sort[smallest_index] > needed_instructions_on_b[smallest_index] && rev_rotate_or_rotate[smallest_index] == 0 && rev_rotate_or_rotate_b[smallest_index] == 0)
+		rrr = needed_instructions_on_b[smallest_index];
+	else if (rev_rotate_or_rotate[smallest_index] == 0 && rev_rotate_or_rotate_b[smallest_index] == 0)
+		rrr = needed_instructions_to_sort[smallest_index];
 	
 
-	while (i < needed_instructions_on_b[smallest_index])
+	int	rrv = 0;
+	if(needed_instructions_to_sort[smallest_index] > needed_instructions_on_b[smallest_index] && rev_rotate_or_rotate[smallest_index] == 1 && rev_rotate_or_rotate_b[smallest_index] == 1)
+		rrv = needed_instructions_on_b[smallest_index];
+	else if (rev_rotate_or_rotate[smallest_index] == 1 && rev_rotate_or_rotate_b[smallest_index] == 1)
+		rrv = needed_instructions_to_sort[smallest_index];
+	// printf("rrr: %d\n", rrr);
+	// printf("rrv: %d\n", rrv);
+
+	while (rrr || rrv)
 	{
-		ft_r(a, b, 'b');
-		*ins_size += 1;
-		*instructions = ft_realloc(*instructions, sizeof(char *) * *ins_size);
-		(*instructions)[*ins_size - 1] = ft_strdup("rb");
-		i++;
+		if (rrr)
+		{
+			rrr--;
+			ft_rr(a, b);
+			*ins_size += 1;
+			*instructions = ft_realloc(*instructions, sizeof(char *) * *ins_size);
+			(*instructions)[*ins_size-1] = ft_strdup("rr");
+			needed_instructions_to_sort[smallest_index]--;
+			needed_instructions_on_b[smallest_index]--;
+		}
+		if (rrv)
+		{
+			rrv--;
+			ft_rrv(a, b);
+			*ins_size += 1;
+			*instructions = ft_realloc(*instructions, sizeof(char *) * *ins_size);
+			(*instructions)[*ins_size-1] = ft_strdup("rrr");
+			needed_instructions_to_sort[smallest_index]--;
+			needed_instructions_on_b[smallest_index]--;
+		}
 	}
+
 	i = 0;
-	
 	while (i < needed_instructions_to_sort[smallest_index])
 	{
 		if(rev_rotate_or_rotate[smallest_index] == 0)
@@ -564,6 +680,26 @@ void	send_b_a(t_stack **a, t_stack **b, char ***instructions, int *ins_size)
 			*ins_size += 1;
 			*instructions = ft_realloc(*instructions, sizeof(char *) * *ins_size);
 			(*instructions)[*ins_size - 1] = ft_strdup("rra");
+		}
+		i++;
+	}
+
+	i = 0;
+	while (i < needed_instructions_on_b[smallest_index])
+	{
+		if(rev_rotate_or_rotate_b[smallest_index] == 0)
+		{
+			ft_r(a, b, 'b');
+			*ins_size += 1;
+			*instructions = ft_realloc(*instructions, sizeof(char *) * *ins_size);
+			(*instructions)[*ins_size - 1] = ft_strdup("rb");
+		}
+		else
+		{
+			ft_rv(a, b, 'b');
+			*ins_size += 1;
+			*instructions = ft_realloc(*instructions, sizeof(char *) * *ins_size);
+			(*instructions)[*ins_size - 1] = ft_strdup("rrb");
 		}
 		i++;
 	}
@@ -610,7 +746,6 @@ char	**flag_0_to_b(t_stack **stack, t_stack **b, int *instructions_size)
 			if(*instructions_size > 1)
 				instructions = ft_realloc(instructions, sizeof(char *) * *instructions_size);
 			instructions[*instructions_size - 1] = ft_strdup("pb");
-			// printf("--------\n");
 		}
 		else
 		{
@@ -632,29 +767,27 @@ char	**flag_0_to_b(t_stack **stack, t_stack **b, int *instructions_size)
 
 char	**sort(t_stack *stack)
 {
-	// print_s(stack);
 	char **instructions;
 	int instruction_size = 0;
 	int i = 0;
 	flag_stack(stack);
-	// print_s(stack);
 	t_stack *b = stack;
 	b = NULL;
 	instructions = flag_0_to_b(&stack, &b, &instruction_size);
-	// print_s(stack);
 	// print_s(b);
-	printf("instruction_size------------: %d\n", instruction_size);
-
+	// print_s(stack);
+	// printf("instruction_size------------: %d\n", instruction_size);
 	while (b)
 	{
 		send_b_a(&stack, &b, &instructions, &instruction_size);
+		// printf("instruction_size------------: %d\n", instruction_size);
+
 	}
-	printf("instruction_size------------: %d\n", instruction_size);
+		// printf("instruction_size------------: %d\n", instruction_size);
 
 	fix_stack2(&stack, &instructions, &instruction_size);
-	printf("instruction_size------------: %d\n", instruction_size);
-	print_s(stack);
-	// print_instruction(instructions, instruction_size);
+	// printf("instruction_size------------: %d\n", instruction_size);
+	// print_s(stack);
+	print_instruction(instructions, instruction_size);
 	return (instructions);
 }
-
