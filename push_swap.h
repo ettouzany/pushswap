@@ -6,7 +6,7 @@
 /*   By: net-touz <net-touz@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/15 19:37:58 by net-touz          #+#    #+#             */
-/*   Updated: 2022/05/18 14:54:46 by net-touz         ###   ########.fr       */
+/*   Updated: 2022/05/20 23:11:01 by net-touz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@ typedef struct s_stack
 	int				rev;
 	int				sub_index;
 	int				insts;
+	int  			middle;
 }					t_stack;
 
 //parser & checker

@@ -6,7 +6,7 @@
 /*   By: net-touz <net-touz@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/16 07:55:49 by net-touz          #+#    #+#             */
-/*   Updated: 2022/05/18 15:55:32 by net-touz         ###   ########.fr       */
+/*   Updated: 2022/05/21 00:57:29 by net-touz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,13 +21,19 @@ void print_s(t_stack *stack)
 	{
 		ft_putstr("\033[31m");
 		ft_putnbr(tmp->value);
-		ft_putchar(' ');
+		ft_putstr(" p ");
 		ft_putnbr(tmp->position);
-		ft_putchar(' ');
+		ft_putstr(" s ");
 		ft_putnbr(tmp->size);
-		ft_putchar(' ');
+		ft_putstr(" f ");
 		ft_putnbr(tmp->flag);
-		ft_putchar('\n');
+		ft_putstr(" i ");
+		ft_putnbr(tmp->index);
+		ft_putstr(" su ");
+		ft_putnbr(tmp->sub_index);
+		ft_putstr(" in ");
+		ft_putnbr(tmp->insts);
+		ft_putstr("\n");
 		ft_putstr("\033[0m");
 		tmp = tmp->next;
 	}
@@ -764,13 +770,264 @@ char	**flag_0_to_b(t_stack **stack, t_stack **b, int *instructions_size)
 	
 	return (instructions);
 }
+t_stack *get_stack_at_pos(t_stack *stack, int pos)
+{
+	t_stack *tmp;
+	tmp = stack;
+	while (tmp)
+	{
+		if (tmp->position == pos)
+			return (tmp);
+		tmp = tmp->next;
+	}
+	return (NULL);
+}
+
+void flag(t_stack *stack)
+{
+	int size = stack->size;
+	int *arr = (int *)malloc(sizeof(int) * size);
+	int *LIS = (int *)malloc(sizeof(int) * size);
+    int i, j, max = 0;
+	i = 0;
+	j = 0;
+	t_stack *tmp = stack;
+	while (tmp)
+	{
+		arr[i++] = tmp->position;
+		tmp = tmp->next;
+	}
+	while (j < size)
+		LIS[j++] = 1;
+	i = 0;
+	j = 0;
+	while (i <size)
+	{
+		j = 0;
+		while (j < i)
+		{
+			if (arr[i] > arr[j] && LIS[i] < LIS[j] + 1)
+				LIS[i] = LIS[j] + 1;
+			j++;
+		}
+		i++;
+	}
+	i = 0;
+	while (i < size)
+	{
+		if (LIS[i] > max)
+		{
+			max = LIS[i];
+			j = i;
+		}
+		i++;
+	}
+	i = j;
+	while (i >= 0)
+	{
+		if(LIS[i] == LIS[j] - 1 || LIS[i] == max)
+		{
+			get_stack_at_pos(stack, arr[i])->flag = 1;
+			j = i;
+		}
+		i--;
+	}
+	free(LIS);
+	free(arr);
+}
+
+void indexing(t_stack *stack)
+{
+	int i = 0;
+	t_stack *tmp = stack;
+	while (tmp)
+	{
+		tmp->index = i;
+		i++;
+		tmp = tmp->next;
+	}
+}
+void middle(t_stack *stack)
+{
+	t_stack *tmp = stack;
+	int i = 0;
+	while (tmp)
+	{
+		tmp->middle = 0;
+		if(i > tmp->size / 2)
+			tmp->middle = 1;
+		i++;
+		tmp = tmp->next;
+	}
+}
+
+void insts(t_stack *stack)
+{
+	t_stack *tmp = stack;
+	int i = 0;
+	while (tmp)
+	{
+		if(tmp->middle == 1)
+			tmp->insts = tmp->size - i;
+		else
+			tmp->insts = tmp->index;
+		i++;
+		tmp = tmp->next;
+	}
+}
+
+t_stack	*least_insts(t_stack *stack)
+{
+	t_stack *tmp = stack;
+	t_stack *min = NULL;
+	while (tmp)
+	{
+		if((!min && tmp->flag == 0) || (tmp->flag == 0 && tmp->insts < min->insts))
+			min = tmp;
+		tmp = tmp->next;
+	}
+	return (min);
+}
+void add_instruction(char **instructions, int *instructions_size, char *instruction)
+{
+	*instructions_size += 1;
+	if(*instructions_size > 1)
+		instructions = ft_realloc(instructions, sizeof(char *) * *instructions_size);
+	instructions[*instructions_size - 1] = ft_strdup(instruction);
+}
+char	**send_to_b(t_stack **stack, t_stack **b, int *instructions_size)
+{
+	char **instructions;
+	int i = 0;
+	instructions = (char **)malloc(sizeof(char *));
+	t_stack *needed_insts = least_insts(*stack);
+	while (needed_insts)
+	{
+		if(needed_insts->insts == 0 && needed_insts->middle == 0)
+		{
+			ft_p(stack, b, 'a');
+			add_instruction(instructions, instructions_size, "pb");
+			
+		}
+		else if(needed_insts->middle == 1)
+		{
+			ft_rv(stack, NULL, 'a');
+			add_instruction(instructions, instructions_size, "rra");
+		} 
+		else
+		{
+			ft_r(stack, NULL, 'a');
+			add_instruction(instructions, instructions_size, "ra");
+		}
+		indexing(*stack);
+		middle(*stack);
+		insts(*stack);
+		needed_insts = least_insts(*stack);
+		i++;
+	}
+	*instructions_size = i;
+	return (instructions);
+}
+
+
+void	send_to_a(t_stack **a, t_stack **b, char ***instructions, int *instruction_size)
+{
+	
+}
+
+void sub_indexing(t_stack *a, t_stack *b)
+{
+	t_stack *tmp_b = b;
+	t_stack *tmp_a = a;
+	while (tmp_b)
+	{
+		tmp_a = a;
+		while (tmp_a)
+		{
+			// ////maybe -1 and +1 are not good
+			if(tmp_b->position == tmp_a->position - 1 || tmp_b->position == tmp_a->position + 1)
+			{
+				tmp_b->sub_index = tmp_a->index;
+				break;
+			}
+			tmp_a = tmp_a->next;
+		}
+		tmp_b = tmp_b->next;
+	}
+}
+
+void set_least_instruction(t_stack *a, t_stack *b)
+{
+	//set least insts for b elements to be in their sub_index position in a
+	t_stack *tmp_b = b;
+	t_stack	*tmp_a = a;
+	int i = 0;
+	int j = 0;
+	while (tmp_b)
+	{
+		tmp_a = a;
+		while (tmp_a)
+		{
+			if(tmp_b->sub_index == tmp_a->index)
+			{
+				tmp_b->insts = tmp_a->insts + tmp_b->insts;
+				break;
+			}
+			tmp_a = tmp_a->next;
+		}
+		tmp_b = tmp_b->next;
+	}
+}
+
 
 char	**sort(t_stack *stack)
 {
 	char **instructions;
 	int instruction_size = 0;
 	int i = 0;
-	flag_stack(stack);
+	flag(stack);
+	indexing(stack);
+	middle(stack);
+	insts(stack);
+
+	t_stack *b = stack;
+	b = NULL;
+	instructions = send_to_b(&stack, &b, &instruction_size);
+	// while (b)
+	// {
+		indexing(stack);
+		middle(stack);
+		insts(stack);
+		indexing(b);
+		middle(b);
+		insts(b);
+		sub_indexing(stack,b);
+		set_least_instruction(stack, b);
+		// send_to_a(&stack, &b, &instructions, &instruction_size);
+	// }
+	print_s(b);
+	print_s(stack);
+	// while (b)
+		// send_to_a(&stack, &b, &instructions, &instruction_size);
+	// fix_stack2(&stack, &instructions, &instruction_size);
+	// printf("instruction_size------------: %d\n", instruction_size);
+	// print_s(stack);
+	// print_instruction(instructions, instruction_size);
+	return (instructions);
+}
+
+
+
+char	**sort2(t_stack *stack)
+{
+	char **instructions;
+	int instruction_size = 0;
+	int i = 0;
+	flag(stack);
+	indexing(stack);
+	middle(stack);
+	
+
 	t_stack *b = stack;
 	b = NULL;
 	instructions = flag_0_to_b(&stack, &b, &instruction_size);
@@ -786,8 +1043,8 @@ char	**sort(t_stack *stack)
 		// printf("instruction_size------------: %d\n", instruction_size);
 
 	fix_stack2(&stack, &instructions, &instruction_size);
-	// printf("instruction_size------------: %d\n", instruction_size);
+	printf("instruction_size------------: %d\n", instruction_size);
 	// print_s(stack);
-	print_instruction(instructions, instruction_size);
+	// print_instruction(instructions, instruction_size);
 	return (instructions);
 }
